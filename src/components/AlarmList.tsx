@@ -52,19 +52,41 @@ function IOSBanner() {
     localStorage.getItem('ios-banner-dismissed') === '1'
   )
 
-  if (!isIOS || isStandalone || dismissed) return null
+  if (!isIOS || dismissed) return null
 
+  // Show install prompt when not standalone
+  if (!isStandalone) {
+    return (
+      <div className="mx-4 mb-4 rounded-2xl px-4 py-3.5 flex items-start gap-3 border border-amber-400/30 bg-amber-500/10">
+        <div className="w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center shrink-0 mt-0.5 text-base">
+          ⚠️
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white text-sm font-semibold">Install required for alarms to work</p>
+          <p className="text-white/55 text-xs mt-1 leading-relaxed">
+            iOS stops web apps in the background. Tap{' '}
+            <span className="text-white/80 font-semibold">Share →</span>{' '}
+            <span className="text-white/80 font-semibold">Add to Home Screen</span>,
+            then open from there and keep the screen on while you sleep.
+          </p>
+        </div>
+        <button
+          onClick={() => { setDismissed(true); localStorage.setItem('ios-banner-dismissed', '1') }}
+          className="text-white/25 hover:text-white/60 text-xl leading-none shrink-0"
+        >
+          ×
+        </button>
+      </div>
+    )
+  }
+
+  // Standalone — remind to keep screen on
   return (
-    <div className="mx-4 mb-4 rounded-2xl px-4 py-3.5 flex items-start gap-3 border border-blue-400/20 bg-blue-500/10">
-      <div className="w-8 h-8 rounded-full bg-blue-400/20 flex items-center justify-center shrink-0 mt-0.5">
-        <span className="text-blue-300 text-sm">ⓘ</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-semibold">Add to Home Screen for best results</p>
-        <p className="text-white/50 text-xs mt-0.5 leading-relaxed">
-          Tap <span className="text-white/70">Share</span> → <span className="text-white/70">Add to Home Screen</span>, then keep the app open overnight. iOS limits background audio.
-        </p>
-      </div>
+    <div className="mx-4 mb-4 rounded-2xl px-4 py-3 flex items-center gap-3 border border-white/10 bg-white/5">
+      <span className="text-base shrink-0">🔆</span>
+      <p className="text-white/50 text-xs leading-relaxed flex-1">
+        Keep the screen on while you sleep — iOS suspends apps when the display turns off.
+      </p>
       <button
         onClick={() => { setDismissed(true); localStorage.setItem('ios-banner-dismissed', '1') }}
         className="text-white/25 hover:text-white/60 text-xl leading-none shrink-0"

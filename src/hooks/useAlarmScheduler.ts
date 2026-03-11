@@ -2,6 +2,25 @@ import { useEffect } from 'react'
 import { useAlarmStore } from '../store/alarms'
 import { startAlarm } from '../lib/audio'
 
+async function showAlarmNotification(label: string) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return
+  const options: NotificationOptions = {
+    body: 'Open the app to dismiss',
+    icon: '/alarm/icons/icon-192.svg',
+    requireInteraction: true,
+    silent: false,
+  }
+  // Prefer service worker notification — works better on iOS PWA
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.ready
+      await reg.showNotification(label || 'Alarm', options)
+      return
+    } catch (_) {}
+  }
+  new Notification(label || 'Alarm', options)
+}
+
 export function useAlarmScheduler() {
   const alarms = useAlarmStore((s) => s.alarms)
   const setFiringAlarm = useAlarmStore((s) => s.setFiringAlarm)
@@ -15,7 +34,7 @@ export function useAlarmScheduler() {
   // Regular alarm scheduler
   useEffect(() => {
     const check = () => {
-      if (firingAlarmId) return // already firing
+      if (firingAlarmId) return
 
       const now = new Date()
       const hour = now.getHours()
@@ -34,6 +53,7 @@ export function useAlarmScheduler() {
         markAlarmFired(alarm.id)
         startAlarm()
         setFiringAlarm(alarm.id)
+        showAlarmNotification(alarm.label)
         break
       }
     }
@@ -48,11 +68,13 @@ export function useAlarmScheduler() {
     if (!pendingWakeCheck) return
 
     const check = () => {
-      if (firingAlarmId || firingWakeCheckId) return // something already firing
+      if (firingAlarmId || firingWakeCheckId) return
       if (Date.now() >= pendingWakeCheck.fireAt) {
+        const alarm = useAlarmStore.getState().alarms.find(a => a.id === pendingWakeCheck.alarmId)
         clearWakeCheck()
         startAlarm()
         setFiringWakeCheck(pendingWakeCheck.alarmId)
+        showAlarmNotification(`⏱ Wake-up check${alarm?.label ? ` — ${alarm.label}` : ''}`)
       }
     }
 
